@@ -6,6 +6,7 @@ public class HelperFunctions {
 
     /**
      * Rotates subtree around the edge connecting node1 and node2.
+     * Assumes node1 is node2's parent.
      *
      * @param node1 parent node to rotate around
      * @param node2 child node that would become parent
@@ -15,7 +16,7 @@ public class HelperFunctions {
 
         if (node2 == node1.leftChild) {
             rotateRight(node1, node2);
-        } else if (node2 == node1.rightChild) {
+        } else {
             rotateLeft(node1, node2);
         }
 
@@ -27,7 +28,7 @@ public class HelperFunctions {
         if (node1Parent != null) {
             if (node1Parent.leftChild == node1) {
                 node1Parent.leftChild = node2;
-            } else if(node1Parent.rightChild == node1) {
+            } else {
                 node1Parent.rightChild = node2;
             }
         }
