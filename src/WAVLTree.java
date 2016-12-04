@@ -36,7 +36,7 @@ public class WAVLTree {
         }
 
         WAVLNode result = searchRecursive(root, k);
-        if (result != null) {
+        if (result.key == k) {
             return result.info;
         } else {
             return null;
@@ -52,7 +52,10 @@ public class WAVLTree {
      * returns -1 if an item with key k already exists in the tree.
      */
     public int insert(int k, String i) {
-        return 42;    // to be replaced by student code
+
+
+
+        return -1;
     }
 
     /**
@@ -152,21 +155,28 @@ public class WAVLTree {
     /**
      * Searches recursively for a node with the given key.
      *
+     * Precondition: root is not null
      * @param root root of the current subtree
      * @param key  key of the node to look for
-     * @return     node with the specified key, or null if key was not found
+     * @return     node with the specified key, or the last node that was reached if key was not found
      */
     private WAVLNode searchRecursive(WAVLNode root, int key) {
-        if (root == null) {
-            return null;
-        } else if (root.key == key) {
+         if (key == root.key) {
             return root;
-        } else if (root.key < key) {
-            return searchRecursive(root.leftChild, key);
-        } else if (root.key > key) {
-            return searchRecursive(root.rightChild, key);
-        }
-        return null;
+        } else if (key < root.key) {
+             if (root.leftChild != null) {
+                 return searchRecursive(root.leftChild, key);
+             } else {
+                 return root;
+             }
+         } else if (key > root.key) {
+             if (root.rightChild != null) {
+                 return searchRecursive(root.rightChild, key);
+             } else {
+                 return root;
+             }
+         }
+        return null; // unreachable code
     }
 
     /**
