@@ -79,6 +79,20 @@ public class HelperFunctions {
         private WAVLNode rightChild;
         private int key;
         private String info;
-        private int rankDiff;
+        private int rankDiff; // difference in rank between current node and its parent
+
+        /**
+         * Increases current node's rank by 1 by decreasing rank difference to parent's rank.
+         */
+        public void promote() {
+            rankDiff--;
+        }
+
+        /**
+         * Decreases current node's rank by 1 by increasing rank difference to parent's rank.
+         */
+        public void demote() {
+            rankDiff++;
+        }
     }
 }
