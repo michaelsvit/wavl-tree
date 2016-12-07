@@ -74,7 +74,7 @@ public class WAVLTree {
         if (searchResult.hasSingleChild()) {
             return rebalance(searchResult);
         } else {
-            newNode.incrementRankDiff(); // used to fix illegal rank difference to parent
+            // searchResult has 2 children and no rebalancing is needed
             return 0;
         }
     }
@@ -364,6 +364,15 @@ public class WAVLTree {
                 return rightChild;
             }
             return null; // should not be reached
+        }
+
+        /**
+         * Checks whether this node has exactly one child.
+         *
+         * @return true iff this node has exactly one child
+         */
+        private boolean hasSingleChild() {
+            return (leftChild != null && rightChild == null) || (leftChild == null && rightChild != null);
         }
     }
 
