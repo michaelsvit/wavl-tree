@@ -72,25 +72,24 @@ public class WAVLTree {
         }
 
         if (searchResult.hasSingleChild()) {
-            return rebalance(searchResult);
+            return rebalanceInsert(searchResult);
         } else {
             // searchResult has 2 children and no rebalancing is needed
             return 0;
         }
     }
 
-    private int rebalance(WAVLNode node) {
+    private int rebalanceInsert(WAVLNode node) {
         int operationCount = 0;
         int rebalanceCase = checkCase(node);
         while (rebalanceCase == 1) {
-            // TODO: check the case that the root is reached regarding rank difference
             node.promote();
             node = node.parent; // this code is reached iff node.parent != null
             rebalanceCase = checkCase(node);
             operationCount++;
         }
         switch (rebalanceCase) {
-            // TODO: fix rank diff changes on rotation and rotation/promotion/demotion order
+            // TODO: check edge cases
             case 2:
                 node.demote();
                 WAVLNode child = node.getChildWithRankDiff(0);
@@ -349,18 +348,17 @@ public class WAVLTree {
             rank--;
         }
 
-        // TODO: Update getChildWithRankDiff to work based on rank instead of rankDiff
         /**
-         * Returns the child node with the specified rank.
-         * Precondition: a child with the specified rank exists
+         * Returns the child node with the specified rankDiff.
+         * Precondition: a child with the specified rankDiff exists
          *
          * @param rankDiff rank to look for in child nodes
-         * @return         child node with the specified rank
+         * @return         child node with a rank of this.rank-rankDiff
          */
         private WAVLNode getChildWithRankDiff(int rankDiff) {
-            if (leftChild != externalLeaf && leftChild.rank == rankDiff) {
+            if ((leftChild != externalLeaf) && (leftChild.rank ==  this.rank - rankDiff)) {
                 return leftChild;
-            } else if (rightChild != externalLeaf && rightChild.rank == rankDiff) {
+            } else if ((rightChild != externalLeaf) && (rightChild.rank == this.rank - rankDiff)) {
                 return rightChild;
             }
             return null; // should not be reached
