@@ -315,7 +315,7 @@ public class WAVLTree {
         private WAVLNode rightChild;
         private int key;
         private String info;
-        private int rankDiff; // difference in rank between current node and its parent
+        private int rank;
 
         private WAVLNode(WAVLNode parent, WAVLNode rightChild, WAVLNode leftChild, int key, String info) {
             this.parent = parent;
@@ -323,65 +323,44 @@ public class WAVLTree {
             this.leftChild = leftChild;
             this.key = key;
             this.info = info;
-            this.rankDiff = 0;
+            this.rank = 0;
         }
 
         private WAVLNode() {
             this.parent = null;
             this.rightChild = null;
             this.leftChild = null;
-            this.key = -1;
+            this.key = Integer.MAX_VALUE;
             this.info = null;
-            this.rankDiff = -1;
+            this.rank = -1;
         }
 
         /**
-         * Increases current node's rank by 1 by decreasing rank difference to parent's rank,
-         * and increasing rank difference from children.
+         * Increases current node's rank by 1.
          */
         private void promote() {
-            rankDiff--;
-            if (leftChild != null) {
-                leftChild.rankDiff++;
-            }
-            if (rightChild != null) {
-                rightChild.rankDiff++;
-            }
+            rank++;
         }
 
         /**
-         * Decreases current node's rank by 1 by increasing rank difference to parent's rank,
-         * and decreasing rank difference from children.
+         * Decreases current node's rank by 1.
          */
         private void demote() {
-            rankDiff++;
-            if (leftChild != null) {
-                leftChild.rankDiff--;
-            }
-            if (rightChild != null) {
-                rightChild.rankDiff--;
-            }
+            rank--;
         }
 
+        // TODO: Update getChildWithRankDiff to work based on rank instead of rankDiff
         /**
-         * Increments rank difference to parent's rank.
-         * Should only be called when inserting new node to avoid issues.
-         */
-        private void incrementRankDiff() {
-            rankDiff++;
-        }
-
-        /**
-         * Returns the child node with the specified rankDiff.
-         * Precondition: a child with the specified rankDiff exists
+         * Returns the child node with the specified rank.
+         * Precondition: a child with the specified rank exists
          *
-         * @param rankDiff rankDiff to look for in child nodes
-         * @return         child node with the specified rankDiff
+         * @param rankDiff rank to look for in child nodes
+         * @return         child node with the specified rank
          */
         private WAVLNode getChildWithRankDiff(int rankDiff) {
-            if (leftChild != externalLeaf && leftChild.rankDiff == rankDiff) {
+            if (leftChild != externalLeaf && leftChild.rank == rankDiff) {
                 return leftChild;
-            } else if (rightChild != externalLeaf && rightChild.rankDiff == rankDiff) {
+            } else if (rightChild != externalLeaf && rightChild.rank == rankDiff) {
                 return rightChild;
             }
             return null; // should not be reached
