@@ -71,46 +71,7 @@ public class WAVLTree {
             searchResult.rightChild = newNode;
         }
 
-        if (searchResult.hasSingleChild()) {
-            return rebalanceInsert(searchResult);
-        } else {
-            // searchResult has 2 children and no rebalancing is needed
-            return 0;
-        }
-    }
-
-    private int rebalanceInsert(WAVLNode node) {
-        int operationCount = 0;
-        int rebalanceCase = checkCase(node);
-        while (rebalanceCase == 1) {
-            node.promote();
-            node = node.parent; // this code is reached iff node.parent != null
-            rebalanceCase = checkCase(node);
-            operationCount++;
-        }
-        switch (rebalanceCase) {
-            // TODO: check edge cases
-            case 2:
-                node.demote();
-                WAVLNode child = node.getChildWithRankDiff(0);
-                rotate(node, child);
-                operationCount += 2;
-                break;
-            case 3:
-                // Fix ranks
-                node.demote();
-                WAVLNode middleNode = node.getChildWithRankDiff(0);
-                middleNode.demote();
-                WAVLNode bottomNode = middleNode.getChildWithRankDiff(1);
-                bottomNode.promote();
-
-                // Perform double rotation
-                doubleRotate(node, middleNode, bottomNode);
-
-                operationCount += 5;
-                break;
-        }
-        return operationCount;
+        return rebalanceInsert(searchResult);
     }
 
     /**
@@ -206,6 +167,100 @@ public class WAVLTree {
 
     // ************************************* Helper functions *************************************************
 
+    /**
+     * Rebalances the tree after insertion by the WAVL algorithm rules
+     *
+     * @param node parent of the newly inserted node
+     * @return     number of rebalancing operations
+     *             (counting promote/demote/rotate as a single operation and double-rotate as two operations)
+     */
+    private int rebalanceInsert(WAVLNode node) {
+        int operationCount = 0;
+        int rebalanceCase = checkCaseInsert(node);
+
+        switch (rebalanceCase) {
+            case 0:
+                return 0; // no rebalancing needed
+            case 1:
+                do {
+                    node.promote();
+                    node = node.parent; // this code is reached iff node.parent != null
+                    rebalanceCase = checkCaseInsert(node);
+                    operationCount++;
+                } while (rebalanceCase == 1);
+                break;
+            case 2:
+                node.demote();
+                WAVLNode child = node.getChildWithRankDiff(0);
+                rotate(node, child);
+                operationCount += 2;
+                break;
+            case 3:
+                // Fix ranks
+                node.demote();
+                WAVLNode middleNode = node.getChildWithRankDiff(0);
+                middleNode.demote();
+                WAVLNode bottomNode = middleNode.getChildWithRankDiff(1);
+                bottomNode.promote();
+
+                // Perform double rotation
+                doubleRotate(node, middleNode, bottomNode);
+
+                operationCount += 5;
+                break;
+        }
+        return operationCount;
+    }
+
+    /**
+     * Checks which case of rebalancing is needed to fix the sub-tree starting at the given node.
+     *
+     * @param node root of the given sub-tree
+     * @return     which case was found
+     */
+    private int checkCaseInsert(WAVLNode node) {
+        if (node == null) {
+            // We have reached the root of the whole tree, no rebalancing is needed
+            return 0;
+        }
+
+        // Check what rank differences the child nodes have from node parameter
+        WAVLNode zeroDiffChild = node.getChildWithRankDiff(0); // saved for cases 2,3 to avoid retrieving again
+        boolean hasZeroDiffChild = zeroDiffChild != null; // defined for consistency in code
+        if (!hasZeroDiffChild) {
+            // No rebalancing is needed
+            return 0;
+        }
+        boolean hasOneDiffChild = node.hasChildWithRankDiff(1);
+
+        if (hasOneDiffChild) {
+            // Case 1
+            return 1;
+        } else {
+            // Node has a child with 0 rank diff, and doesn't have a child with 1 rank diff,
+            // so it must have a child with 2 rank diff
+
+            // Case 2 or 3
+            // Check which direction of case 2 or 3 it is
+            if (zeroDiffChild == node.leftChild) {
+                if (zeroDiffChild.getLeftChildRankDiff() == 1) {
+                    // Case 2
+                    return 2;
+                } else {
+                    // Case 3
+                    return 3;
+                }
+            } else {
+                if (zeroDiffChild.getRightChildRankDiff() == 1) {
+                    // Case 2
+                    return 2;
+                } else {
+                    // Case 3
+                    return 3;
+                }
+            }
+        }
+    }
 
     /**
      * Searches recursively for a node with the given key.
@@ -325,6 +380,9 @@ public class WAVLTree {
             this.rank = 0;
         }
 
+        /**
+         * External leaf constructor
+         */
         private WAVLNode() {
             this.parent = null;
             this.rightChild = null;
@@ -349,28 +407,46 @@ public class WAVLTree {
         }
 
         /**
-         * Returns the child node with the specified rankDiff.
-         * Precondition: a child with the specified rankDiff exists
+         * Returns the child node with the specified rank difference, if one exists.
          *
-         * @param rankDiff rank to look for in child nodes
+         * @param rankDiff rank difference to look for in child nodes
          * @return         child node with a rank of this.rank-rankDiff
          */
         private WAVLNode getChildWithRankDiff(int rankDiff) {
-            if ((leftChild != externalLeaf) && (leftChild.rank ==  this.rank - rankDiff)) {
+            if (leftChild.rank ==  this.rank - rankDiff) {
                 return leftChild;
-            } else if ((rightChild != externalLeaf) && (rightChild.rank == this.rank - rankDiff)) {
+            } else if (rightChild.rank == this.rank - rankDiff) {
                 return rightChild;
             }
-            return null; // should not be reached
+            return null; // the requested child was not found
         }
 
         /**
-         * Checks whether this node has exactly one child.
+         * Returns whether a child node with the specified rank difference exists.
          *
-         * @return true iff this node has exactly one child
+         * @param rankDiff rank difference to look for in child nodes
+         * @return         true iff a child node with the specified rank difference was found
          */
-        private boolean hasSingleChild() {
-            return (leftChild != null && rightChild == null) || (leftChild == null && rightChild != null);
+        private boolean hasChildWithRankDiff(int rankDiff) {
+            return getChildWithRankDiff(rankDiff) != null;
+        }
+
+        /**
+         * Gets the rank difference between this node and its left child.
+         *
+         * @return difference in rank
+         */
+        private int getLeftChildRankDiff() {
+            return this.rank - leftChild.rank;
+        }
+
+        /**
+         * Gets the rank difference between this node and its right child.
+         *
+         * @return difference in rank
+         */
+        private int getRightChildRankDiff() {
+            return this.rank - rightChild.rank;
         }
     }
 
