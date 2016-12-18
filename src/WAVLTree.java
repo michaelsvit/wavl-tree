@@ -7,7 +7,7 @@
 
 public class WAVLTree {
 
-    private WAVLNode root;
+    public WAVLNode root;
     private final WAVLNode externalLeaf; // assigned to be the bottom node of every route in the tree
     private WAVLNode min; // node with minimum key in the tree
     private WAVLNode max; // node with maximum key in the tree
@@ -75,9 +75,9 @@ public class WAVLTree {
         WAVLNode newNode = new WAVLNode(searchResult, externalLeaf, externalLeaf, k, i);
         // Insert newNode into the tree as the left or right child of searchResult
         if (k < searchResult.key) {
-            searchResult.leftChild = newNode;
+            searchResult.left = newNode;
         } else {
-            searchResult.rightChild = newNode;
+            searchResult.right = newNode;
         }
 
         updateClassMembersInsert(newNode);
@@ -151,7 +151,9 @@ public class WAVLTree {
      */
     public int[] keysToArray() {
         int[] arr = new int[size];
-        keysToArrayRecursive(arr, 0, root);
+        if (root != null) {
+            keysToArrayRecursive(arr, 0, root);
+        }
         return arr;
     }
 
@@ -164,7 +166,9 @@ public class WAVLTree {
      */
     public String[] infoToArray() {
         String[] arr = new String[size];
-        infoToArrayRecursive(arr, 0, root);
+        if (root != null) {
+            infoToArrayRecursive(arr, 0, root);
+        }
         return arr;
     }
 
@@ -258,7 +262,7 @@ public class WAVLTree {
 
             // Case 2 or 3
             // Check which direction of case 2 or 3 it is
-            if (zeroDiffChild == node.leftChild) {
+            if (zeroDiffChild == node.left) {
                 if (zeroDiffChild.getLeftChildRankDiff() == 1) {
                     // Case 2
                     return 2;
@@ -325,9 +329,9 @@ public class WAVLTree {
     private void swapNodes(WAVLNode node1, WAVLNode node2) {
         // Swap parent's child pointer
         if (node1.isLeftChild()) {
-            node1.parent.leftChild = node2;
+            node1.parent.left = node2;
         } else {
-            node1.parent.rightChild = node2;
+            node1.parent.right = node2;
         }
 
         if (node2 != externalLeaf) {
@@ -403,10 +407,10 @@ public class WAVLTree {
                 return 1;
             case 4:
                 WAVLNode brother = node.parent.getChildWithRankDiff(1);
-                if (node.parent.leftChild == node) {
-                    doubleRotate(node.parent, brother, brother.leftChild);
+                if (node.parent.left == node) {
+                    doubleRotate(node.parent, brother, brother.left);
                 } else {
-                    doubleRotate(node.parent, brother, brother.rightChild);
+                    doubleRotate(node.parent, brother, brother.right);
                 }
                 return 2;
         }
@@ -431,8 +435,8 @@ public class WAVLTree {
                 WAVLNode lowDiffChild = parent.getChildWithRankDiff(1);
                 if (lowDiffChild.getLeftChildRankDiff() == 2 && lowDiffChild.getRightChildRankDiff() == 2) {
                     return 2;
-                } else if (parent.leftChild == node && lowDiffChild.getRightChildRankDiff() == 1
-                        || parent.rightChild == node && lowDiffChild.getLeftChildRankDiff() == 1) {
+                } else if (parent.left == node && lowDiffChild.getRightChildRankDiff() == 1
+                        || parent.right == node && lowDiffChild.getLeftChildRankDiff() == 1) {
                     return 3;
                 } else {
                     return 4;
@@ -455,14 +459,14 @@ public class WAVLTree {
         if (key == root.key) {
             return root;
         } else if (key < root.key) {
-            if (root.leftChild != externalLeaf) {
-                return searchRecursive(root.leftChild, key);
+            if (root.left != externalLeaf) {
+                return searchRecursive(root.left, key);
             } else {
                 return root;
             }
         } else if (key > root.key) {
-            if (root.rightChild != externalLeaf) {
-                return searchRecursive(root.rightChild, key);
+            if (root.right != externalLeaf) {
+                return searchRecursive(root.right, key);
             } else {
                 return root;
             }
@@ -480,7 +484,7 @@ public class WAVLTree {
     private void rotate(WAVLNode node1, WAVLNode node2) {
         WAVLNode node1Parent = node1.parent; // temporarily save so it's not lost on rotation
 
-        if (node2 == node1.leftChild) {
+        if (node2 == node1.left) {
             rotateRight(node1, node2);
         } else {
             rotateLeft(node1, node2);
@@ -492,10 +496,10 @@ public class WAVLTree {
 
         // If not at the tree's root, fix node1's child pointer
         if (node1Parent != null) {
-            if (node1Parent.leftChild == node1) {
-                node1Parent.leftChild = node2;
+            if (node1Parent.left == node1) {
+                node1Parent.left = node2;
             } else {
-                node1Parent.rightChild = node2;
+                node1Parent.right = node2;
             }
         }
     }
@@ -507,11 +511,11 @@ public class WAVLTree {
      * @param node2 child node that would become parent
      */
     private void rotateLeft(WAVLNode node1, WAVLNode node2) {
-        WAVLNode node2LeftChild = node2.leftChild; // temporarily save so it's not lost on rotation
+        WAVLNode node2LeftChild = node2.left; // temporarily save so it's not lost on rotation
 
         // Reassign pointers
-        node2.leftChild = node1;
-        node1.rightChild = node2LeftChild;
+        node2.left = node1;
+        node1.right = node2LeftChild;
     }
 
     /**
@@ -521,11 +525,11 @@ public class WAVLTree {
      * @param node2 child node that would become parent
      */
     private void rotateRight(WAVLNode node1, WAVLNode node2) {
-        WAVLNode node2RightChild = node2.rightChild; // temporarily save so it's not lost on rotation
+        WAVLNode node2RightChild = node2.right; // temporarily save so it's not lost on rotation
 
         // Reassign pointers
-        node2.rightChild = node1;
-        node1.leftChild = node2RightChild;
+        node2.right = node1;
+        node1.left = node2RightChild;
     }
 
     /**
@@ -559,9 +563,9 @@ public class WAVLTree {
     }
 
     private WAVLNode findPredecessor(WAVLNode node) {
-        WAVLNode predecessor = node.leftChild;
-        while (predecessor.rightChild != externalLeaf) {
-            predecessor = predecessor.rightChild;
+        WAVLNode predecessor = node.left;
+        while (predecessor.right != externalLeaf) {
+            predecessor = predecessor.right;
         }
         return predecessor;
     }
@@ -627,17 +631,17 @@ public class WAVLTree {
     private int keysToArrayRecursive(int[] arr, int keysInserted, WAVLNode node) {
         // Insert left sub-tree to the array in order
         int leftSubTreeSize = 0;
-        if (node.leftChild != externalLeaf) {
-            leftSubTreeSize = keysToArrayRecursive(arr, keysInserted, node.leftChild);
+        if (node.left != externalLeaf) {
+            leftSubTreeSize = keysToArrayRecursive(arr, keysInserted, node.left);
         }
 
         // Insert current node to the array
-        arr[keysInserted + leftSubTreeSize + 1] = node.key;
+        arr[keysInserted + leftSubTreeSize] = node.key;
 
         // Insert right sub-tree to the array in order
         int rightSubTreeSize = 0;
-        if (node.rightChild != externalLeaf) {
-            rightSubTreeSize = keysToArrayRecursive(arr, keysInserted + leftSubTreeSize, node.rightChild);
+        if (node.right != externalLeaf) {
+            rightSubTreeSize = keysToArrayRecursive(arr, keysInserted + leftSubTreeSize + 1, node.right);
         }
 
         return leftSubTreeSize + 1 + rightSubTreeSize;
@@ -654,17 +658,17 @@ public class WAVLTree {
     private int infoToArrayRecursive(String[] arr, int stringsInserted, WAVLNode node) {
         // Insert left sub-tree to the array in order
         int leftSubTreeSize = 0;
-        if (node.leftChild != externalLeaf) {
-            leftSubTreeSize = infoToArrayRecursive(arr, stringsInserted, node.leftChild);
+        if (node.left != externalLeaf) {
+            leftSubTreeSize = infoToArrayRecursive(arr, stringsInserted, node.left);
         }
 
         // Insert current node to the array
-        arr[stringsInserted + leftSubTreeSize + 1] = node.info;
+        arr[stringsInserted + leftSubTreeSize] = node.info;
 
         // Insert right sub-tree to the array in order
         int rightSubTreeSize = 0;
-        if (node.rightChild != externalLeaf) {
-            rightSubTreeSize = infoToArrayRecursive(arr, stringsInserted + leftSubTreeSize, node.rightChild);
+        if (node.right != externalLeaf) {
+            rightSubTreeSize = infoToArrayRecursive(arr, stringsInserted + leftSubTreeSize + 1, node.right);
         }
 
         return leftSubTreeSize + 1 + rightSubTreeSize;
@@ -673,19 +677,19 @@ public class WAVLTree {
     /**
      * A single tree-node that holds given String info
      */
-    private class WAVLNode {
+    public class WAVLNode {
 
-        private WAVLNode parent;
-        private WAVLNode leftChild;
-        private WAVLNode rightChild;
-        private int key;
-        private String info;
-        private int rank;
+        public WAVLNode parent;
+        public WAVLNode left;
+        public WAVLNode right;
+        public int key;
+        public String info;
+        public int rank;
 
-        private WAVLNode(WAVLNode parent, WAVLNode rightChild, WAVLNode leftChild, int key, String info) {
+        private WAVLNode(WAVLNode parent, WAVLNode right, WAVLNode left, int key, String info) {
             this.parent = parent;
-            this.rightChild = rightChild;
-            this.leftChild = leftChild;
+            this.right = right;
+            this.left = left;
             this.key = key;
             this.info = info;
             this.rank = 0;
@@ -696,8 +700,8 @@ public class WAVLTree {
          */
         private WAVLNode() {
             this.parent = null;
-            this.rightChild = null;
-            this.leftChild = null;
+            this.right = null;
+            this.left = null;
             this.key = Integer.MAX_VALUE;
             this.info = null;
             this.rank = -1;
@@ -724,10 +728,10 @@ public class WAVLTree {
          * @return child node with a rank of this.rank-rankDiff
          */
         private WAVLNode getChildWithRankDiff(int rankDiff) {
-            if (leftChild.rank == this.rank - rankDiff) {
-                return leftChild;
-            } else if (rightChild.rank == this.rank - rankDiff) {
-                return rightChild;
+            if (left.rank == this.rank - rankDiff) {
+                return left;
+            } else if (right.rank == this.rank - rankDiff) {
+                return right;
             }
             return null; // the requested child was not found
         }
@@ -748,7 +752,7 @@ public class WAVLTree {
          * @return difference in rank
          */
         private int getLeftChildRankDiff() {
-            return this.rank - leftChild.rank;
+            return this.rank - left.rank;
         }
 
         /**
@@ -757,7 +761,7 @@ public class WAVLTree {
          * @return difference in rank
          */
         private int getRightChildRankDiff() {
-            return this.rank - rightChild.rank;
+            return this.rank - right.rank;
         }
 
         /**
@@ -766,8 +770,8 @@ public class WAVLTree {
          * @return true iff this node is a leaf.
          */
         private boolean isALeaf() {
-            return rightChild == externalLeaf
-                    && leftChild == externalLeaf;
+            return right == externalLeaf
+                    && left == externalLeaf;
         }
 
         /**
@@ -776,8 +780,8 @@ public class WAVLTree {
          * @return true iff this node is a unary node.
          */
         private boolean isUnary() {
-            return (rightChild == externalLeaf && leftChild != externalLeaf) ||
-                    (rightChild != externalLeaf && leftChild == externalLeaf);
+            return (right == externalLeaf && left != externalLeaf) ||
+                    (right != externalLeaf && left == externalLeaf);
         }
 
         /**
@@ -786,7 +790,7 @@ public class WAVLTree {
          * @return true iff this is the left child of parent
          */
         private boolean isLeftChild() {
-            return parent.leftChild == this;
+            return parent.left == this;
         }
     }
 }
