@@ -94,25 +94,65 @@ public class WAVLTree {
      * returns -1 if an item with key k was not found in the tree.
      */
     public int delete(int k) {
-        if (!empty()) {
-            WAVLNode searchResult = searchRecursive(root, k);
-            if (searchResult.key == k) {
-                updateClassMembersDelete(searchResult);
-
-                if (searchResult == root) {
-                    root = null;
-                    return 0;
-                }
-
-                //check if node is unary/leaf/internal
-                if (!(searchResult.isALeaf() || searchResult.isUnary())) {
-                    searchResult = switchWithPredecessor(searchResult);
-                }
-
-                return handleStartDelete(searchResult);
-            }
+        if (empty()) {
+            return -1;
         }
-        return -1;
+
+        WAVLNode searchResult = searchRecursive(root, k);
+        if (searchResult.key != k) {
+            return -1;
+        }
+
+        updateClassMembersDelete(searchResult);
+        // Eliminate root case
+        if (searchResult == root) {
+            root = null;
+            return 0;
+        }
+
+        if (searchResult.isInnerNode()) {
+            searchResult = switchWithPredecessor(searchResult);
+        }
+
+        deleteNode(searchResult);
+        return rebalanceDeleteRecursive(searchResult.parent);
+    }
+
+    private void deleteNode(WAVLNode searchResult) {
+
+    }
+
+    private int rebalanceDeleteRecursive(WAVLNode node) {
+        int rebalanceCase = checkCaseDelete(node);
+
+        switch (rebalanceCase) {
+            case 0:
+                return 0; // no rebalancing is needed
+            case 1:
+                node.demote();
+                return 1 + rebalanceDeleteRecursive(node.parent);
+            case 2:
+                node.demote();
+                node.getChildWithRankDiff(1).demote();
+                return 2 + rebalanceDeleteRecursive(node.parent);
+            case 3:
+                rotate(node, node.getChildWithRankDiff(1));
+                if (node.getLeftChildRankDiff() == 2 && node.getRightChildRankDiff() == 2) {
+                    node.demote();
+                    return 2;
+                } else {
+                    return 1;
+                }
+            case 4:
+                WAVLNode diffOneChild = node.getChildWithRankDiff(1);
+                doubleRotate(node, diffOneChild, diffOneChild.getChildWithRankDiff(1));
+                return 2;
+        }
+        return 0; // unreachable code
+    }
+
+    private int checkCaseDelete(WAVLNode node) {
+        return 0;
     }
 
     /**
@@ -317,27 +357,7 @@ public class WAVLTree {
                 swapNodes(node, child1);
                 return handleRebalanceDelete(node); // complete infinite state
         }
-        return 0; // unreachable code
-    }
-
-    /**
-     * Swap pointers to node1 with pointers to node2 and update node2's parent.
-     *
-     * @param node1 node to be swapped
-     * @param node2 node to swap to
-     */
-    private void swapNodes(WAVLNode node1, WAVLNode node2) {
-        // Swap parent's child pointer
-        if (node1.isLeftChild()) {
-            node1.parent.left = node2;
-        } else {
-            node1.parent.right = node2;
-        }
-
-        if (node2 != externalLeaf) {
-            // Swap node2's parent pointer
-            node2.parent = node1.parent;
-        }
+        return 0;
     }
 
     /**
@@ -444,6 +464,26 @@ public class WAVLTree {
             }
         }
 
+    }
+
+    /**
+     * Swap pointers to node1 with pointers to node2 and update node2's parent.
+     *
+     * @param node1 node to be swapped
+     * @param node2 node to swap to
+     */
+    private void swapNodes(WAVLNode node1, WAVLNode node2) {
+        // Swap parent's child pointer
+        if (node1.isLeftChild()) {
+            node1.parent.left = node2;
+        } else {
+            node1.parent.right = node2;
+        }
+
+        if (node2 != externalLeaf) {
+            // Swap node2's parent pointer
+            node2.parent = node1.parent;
+        }
     }
 
     /**
@@ -791,6 +831,10 @@ public class WAVLTree {
          */
         private boolean isLeftChild() {
             return parent.left == this;
+        }
+
+        private boolean isInnerNode() {
+            return false;
         }
     }
 }
