@@ -461,13 +461,13 @@ public class WAVLTree {
         if (key == root.key) {
             return root;
         } else if (key < root.key) {
-            if (root.leftChild != null) {
+            if (root.leftChild != externalLeaf) {
                 return searchRecursive(root.leftChild, key);
             } else {
                 return root;
             }
         } else if (key > root.key) {
-            if (root.rightChild != null) {
+            if (root.rightChild != externalLeaf) {
                 return searchRecursive(root.rightChild, key);
             } else {
                 return root;
