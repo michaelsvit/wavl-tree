@@ -150,15 +150,9 @@ public class WAVLTree {
      * or an empty array if the tree is empty.
      */
     public int[] keysToArray() {
-        if (this.empty()) {
-            return new int[0];
-        }
-
-        WAVLNode iter = root;
-
-
-        int[] arr = new int[42]; // to be replaced by student code
-        return arr;              // to be replaced by student code
+        int[] arr = new int[size];
+        keysToArrayRecursive(arr, 0, root);
+        return arr;
     }
 
     /**
@@ -169,8 +163,9 @@ public class WAVLTree {
      * or an empty array if the tree is empty.
      */
     public String[] infoToArray() {
-        String[] arr = new String[42]; // to be replaced by student code
-        return arr;                    // to be replaced by student code
+        String[] arr = new String[size];
+        infoToArrayRecursive(arr, 0, root);
+        return arr;
     }
 
     /**
@@ -292,7 +287,6 @@ public class WAVLTree {
      * /rotate as a single operation and double-rotate as two operations)
      */
     private int handleStartDelete(WAVLNode node) {
-        int operationCount = 0;
         int startCase = checkStartCaseDelete(node);
         switch (startCase) {
             case 0:
@@ -305,11 +299,11 @@ public class WAVLTree {
                 if (parent.parent.hasChildWithRankDiff(2)) {
                     return 1;
                 } else {
-                    operationCount = 1 + handleRebalanceDelete(parent); // complete infinite state
+                    return 1 + handleRebalanceDelete(parent); // complete infinite state
                 }
             case 2:
                 swapNodes(node, externalLeaf);
-                operationCount = handleRebalanceDelete(node); // complete infinite state
+                return handleRebalanceDelete(node); // complete infinite state
             case 3:
                 WAVLNode child = node.getChildWithRankDiff(1);
                 swapNodes(node, child);
@@ -317,13 +311,13 @@ public class WAVLTree {
             case 4:
                 WAVLNode child1 = node.getChildWithRankDiff(1);
                 swapNodes(node, child1);
-                operationCount = handleRebalanceDelete(node); // complete infinite state
+                return handleRebalanceDelete(node); // complete infinite state
         }
-        return operationCount;
+        return 0; // unreachable code
     }
 
     /**
-     * Swap pointers to node1 with pointers to node2.
+     * Swap pointers to node1 with pointers to node2 and update node2's parent.
      *
      * @param node1 node to be swapped
      * @param node2 node to swap to
@@ -620,6 +614,60 @@ public class WAVLTree {
 
         // Update tree size
         size--;
+    }
+
+    /**
+     * Recursively inserts tree keys into an array in sorted order.
+     *
+     * @param arr          array to which the keys are inserted
+     * @param keysInserted number of keys already inserted into the array
+     * @param node         root of current sub-tree
+     * @return             number of keys that were inserted to the array in current sub-tree
+     */
+    private int keysToArrayRecursive(int[] arr, int keysInserted, WAVLNode node) {
+        // Insert left sub-tree to the array in order
+        int leftSubTreeSize = 0;
+        if (node.leftChild != externalLeaf) {
+            leftSubTreeSize = keysToArrayRecursive(arr, keysInserted, node.leftChild);
+        }
+
+        // Insert current node to the array
+        arr[keysInserted + leftSubTreeSize + 1] = node.key;
+
+        // Insert right sub-tree to the array in order
+        int rightSubTreeSize = 0;
+        if (node.rightChild != externalLeaf) {
+            rightSubTreeSize = keysToArrayRecursive(arr, keysInserted + leftSubTreeSize + 1, node.rightChild);
+        }
+
+        return leftSubTreeSize + 1 + rightSubTreeSize;
+    }
+
+    /**
+     * Recursively inserts tree info into an array in sorted order (by keys).
+     *
+     * @param arr             array to which the info is inserted
+     * @param stringsInserted number of info strings that were already inserted into the array
+     * @param node            root of current sub-tree
+     * @return                number of info strings that were inserted to the array in current sub-tree
+     */
+    private int infoToArrayRecursive(String[] arr, int stringsInserted, WAVLNode node) {
+        // Insert left sub-tree to the array in order
+        int leftSubTreeSize = 0;
+        if (node.leftChild != externalLeaf) {
+            leftSubTreeSize = infoToArrayRecursive(arr, stringsInserted, node.leftChild);
+        }
+
+        // Insert current node to the array
+        arr[stringsInserted + leftSubTreeSize + 1] = node.info;
+
+        // Insert right sub-tree to the array in order
+        int rightSubTreeSize = 0;
+        if (node.rightChild != externalLeaf) {
+            rightSubTreeSize = infoToArrayRecursive(arr, stringsInserted + leftSubTreeSize + 1, node.rightChild);
+        }
+
+        return leftSubTreeSize + 1 + rightSubTreeSize;
     }
 
     /**
