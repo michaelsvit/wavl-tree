@@ -637,7 +637,7 @@ public class WAVLTree {
         // Insert right sub-tree to the array in order
         int rightSubTreeSize = 0;
         if (node.rightChild != externalLeaf) {
-            rightSubTreeSize = keysToArrayRecursive(arr, keysInserted + leftSubTreeSize + 1, node.rightChild);
+            rightSubTreeSize = keysToArrayRecursive(arr, keysInserted + leftSubTreeSize, node.rightChild);
         }
 
         return leftSubTreeSize + 1 + rightSubTreeSize;
@@ -664,7 +664,7 @@ public class WAVLTree {
         // Insert right sub-tree to the array in order
         int rightSubTreeSize = 0;
         if (node.rightChild != externalLeaf) {
-            rightSubTreeSize = infoToArrayRecursive(arr, stringsInserted + leftSubTreeSize + 1, node.rightChild);
+            rightSubTreeSize = infoToArrayRecursive(arr, stringsInserted + leftSubTreeSize, node.rightChild);
         }
 
         return leftSubTreeSize + 1 + rightSubTreeSize;
