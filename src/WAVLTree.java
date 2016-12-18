@@ -83,12 +83,11 @@ public class WAVLTree {
      * returns -1 if an item with key k was not found in the tree.
      */
     public int delete(int k) {
-        WAVLNode searchResult = null;
         if (!empty()) {
-            searchResult = searchRecursive(root, k);
+            WAVLNode searchResult = searchRecursive(root, k);
             if (searchResult.key == k) {
                 //check if node is unary/leaf/internal
-                if (!(isALeaf(searchResult)||isAUnary(searchResult))){
+                if (!(searchResult.isALeaf() || searchResult.isUnary())) {
                     searchResult = switchWithPredecessor(searchResult);
                 }
                 return handleStartDelete(searchResult);
@@ -182,8 +181,8 @@ public class WAVLTree {
      * Rebalances the tree after insertion by the WAVL algorithm rules
      *
      * @param node parent of the newly inserted node
-     * @return     number of rebalancing operations
-     *             (counting promote/demote/rotate as a single operation and double-rotate as two operations)
+     * @return number of rebalancing operations
+     * (counting promote/demote/rotate as a single operation and double-rotate as two operations)
      */
     private int rebalanceInsert(WAVLNode node) {
         int operationCount = 0;
@@ -227,7 +226,7 @@ public class WAVLTree {
      * Checks which case of rebalancing is needed to fix the sub-tree starting at the given node.
      *
      * @param node root of the given sub-tree
-     * @return     which case was found
+     * @return which case was found
      */
     private int checkCaseInsert(WAVLNode node) {
         if (node == null) {
@@ -276,34 +275,34 @@ public class WAVLTree {
     /**
      * rebalances the bottom sub-tree after deletion
      * and sends the problem up if needed
-     * @param  node which we want to delete
+     *
+     * @param node which we want to delete
      * @return number of rebalancing operations (counting promote/demote
-     *         /rotate as a single operation and double-rotate as two operations)
+     * /rotate as a single operation and double-rotate as two operations)
      */
     private int handleStartDelete(WAVLNode node) {
         int operationCount = 0;
-        int startCase = checkstartCaseDelete(node);
+        int startCase = checkStartCaseDelete(node);
         switch (startCase) {
-            case 0 :
+            case 0:
                 node = externalLeaf;
                 return 0;
-            case 1 :
-                node  = externalLeaf;
+            case 1:
+                node = externalLeaf;
                 node.parent.demote();
-                if (node.parent.parent.hasChildWithRankDiff(2)){
+                if (node.parent.parent.hasChildWithRankDiff(2)) {
                     return 1;
-                }
-                else{
+                } else {
                     operationCount = 1 + handleRebalanceDelete(node.parent); // complete infinite state
                 }
-            case 2 :
+            case 2:
                 node = externalLeaf;
                 operationCount = handleRebalanceDelete(node); // complete infinite state
-            case 3 :
+            case 3:
                 WAVLNode child = node.getChildWithRankDiff(1);
                 node = child;
                 return 0;
-            case 4 :
+            case 4:
                 WAVLNode child1 = node.getChildWithRankDiff(1);
                 node = child1;
                 operationCount = handleRebalanceDelete(node); // complete infinite state
@@ -313,36 +312,34 @@ public class WAVLTree {
 
     /**
      * checks if deleted node is leaf/unary node, and differs between the sub-tree cases.
-     * @param  node which we want to delete
+     *
+     * @param node which we want to delete
      * @return number that represents the case we need to deal with at the bottom sub-tree
      */
-    private int checkstartCaseDelete(WAVLNode node) {
+    private int checkStartCaseDelete(WAVLNode node) {
         WAVLNode parent = node.parent;
-        if(isALeaf(node)){
-            // Check the rank differences the node's parent has from his childs
-            if (parent.getLeftChildRankDiff()==1 && parent.getRightChildRankDiff()==1) {
+        if (node.isALeaf()) {
+            // Check the rank differences the node's parent has from his children
+            if (parent.getLeftChildRankDiff() == 1 && parent.getRightChildRankDiff() == 1) {
                 // case 0 ,No rebalancing is needed
                 return 0;
-            }
-            else {
+            } else {
                 // separate between leaf deletion cases
-                if (parent.getChildWithRankDiff(1)==node) {
+                if (parent.getChildWithRankDiff(1) == node) {
                     // Case 1
                     return 1;
-                }
-                else
+                } else
                     // Case 2
                     return 2;
             }
         }
         // if we got so far, the node must be an unary node
-        else{
-            // Check the rank differences the node's parent has from his childs
-            if (parent.getChildWithRankDiff(1)== node) {
+        else {
+            // Check the rank differences the node's parent has from his children
+            if (parent.getChildWithRankDiff(1) == node) {
                 // case 3. combines to different cases ,No rebalancing is needed
                 return 3;
-            }
-            else {
+            } else {
                 // Case 4, the only case remains
                 return 4;
             }
@@ -351,40 +348,40 @@ public class WAVLTree {
     }
 
     /**
-     * rebalances the hole tree after deletion with recursion, until the problem
+     * rebalances the whole tree after deletion with recursion, until the problem
      * comes to a finite state.
-     * @param  node which we deleted
+     *
+     * @param node which we deleted
      * @return number of rebalancing operations (counting promote/demote
-     *         /rotate as a single operation and double-rotate as two operations)
+     * /rotate as a single operation and double-rotate as two operations)
      */
-    private int handleRebalanceDelete(WAVLNode node){
+    private int handleRebalanceDelete(WAVLNode node) {
         int operationCount = 0;
         int rebalanceCase = checkRebalanceCaseDelete(node);
         switch (rebalanceCase) {
-            case 0 :
+            case 0:
                 return operationCount; //the tree is balanced
-            case 1 :
+            case 1:
                 node.parent.demote();
                 operationCount = 1 + handleRebalanceDelete(node.parent);
-            case 2 :
+            case 2:
                 node.parent.demote();
                 node.parent.getChildWithRankDiff(1).demote();
                 operationCount = 2 + handleRebalanceDelete(node.parent);
-            case 3 :
+            case 3:
                 rotate(node.parent, node.parent.getChildWithRankDiff(1));
                 //rank diff is 2 from both childs, node may be sentinal
-                if (!node.parent.hasChildWithRankDiff(1)){
+                if (!node.parent.hasChildWithRankDiff(1)) {
                     node.parent.demote();
                     operationCount = 2;
                 }
                 operationCount = 1;
-            case 4 :
+            case 4:
                 WAVLNode brother = node.parent.getChildWithRankDiff(1);
-                if (node.parent.leftChild==node){
-                    doubleRotate(node.parent, brother, brother.leftChild );
-                }
-                else {
-                    doubleRotate(node.parent, brother, brother.rightChild );
+                if (node.parent.leftChild == node) {
+                    doubleRotate(node.parent, brother, brother.leftChild);
+                } else {
+                    doubleRotate(node.parent, brother, brother.rightChild);
                 }
                 operationCount = 2;
         }
@@ -392,31 +389,27 @@ public class WAVLTree {
     }
 
 
-
     /**
      * differs between rebalancing cases of internal nodes.
-     * @param  node which we deleted
+     *
+     * @param node which we deleted
      * @return number that represents the rebalancing case we need to deal with
      */
     private int checkRebalanceCaseDelete(WAVLNode node) {
         WAVLNode parent = node.parent;
-        if (!parent.hasChildWithRankDiff(3)){
+        if (!parent.hasChildWithRankDiff(3)) {
             return 0;
-        }
-        else {
-            if (parent.hasChildWithRankDiff(2)){
+        } else {
+            if (parent.hasChildWithRankDiff(2)) {
                 return 1;
-            }
-            else{
+            } else {
                 WAVLNode lowDiffChild = parent.getChildWithRankDiff(1);
-                if (lowDiffChild.getLeftChildRankDiff()==2 && lowDiffChild.getRightChildRankDiff()==2){
+                if (lowDiffChild.getLeftChildRankDiff() == 2 && lowDiffChild.getRightChildRankDiff() == 2) {
                     return 2;
-                }
-                else if (parent.leftChild==node && lowDiffChild.getRightChildRankDiff()==1
-                        || parent.rightChild==node && lowDiffChild.getLeftChildRankDiff()==1){
+                } else if (parent.leftChild == node && lowDiffChild.getRightChildRankDiff() == 1
+                        || parent.rightChild == node && lowDiffChild.getLeftChildRankDiff() == 1) {
                     return 3;
-                }
-                else {
+                } else {
                     return 4;
                 }
             }
@@ -426,11 +419,12 @@ public class WAVLTree {
 
     /**
      * Searches recursively for a node with the given key.
-     *
+     * <p>
      * Precondition: root is not null
+     *
      * @param root root of the current subtree
      * @param key  key of the node to look for
-     * @return     node with the specified key, or the last node that was reached if key was not found
+     * @return node with the specified key, or the last node that was reached if key was not found
      */
     private WAVLNode searchRecursive(WAVLNode root, int key) {
         if (key == root.key) {
@@ -522,44 +516,28 @@ public class WAVLTree {
     }
 
     /**
-     * returns whether a node is a leaf.
-     *
-     *  @param node to test if leaf
-     *  @return			true if the specified node is a leaf.
-     */
-    private boolean isALeaf (WAVLNode node){
-        return (node.rightChild==this.externalLeaf
-                && node.leftChild==this.externalLeaf);
-    }
-
-    /**
-     * returns whether a node is a unary node.
-     *
-     *  @param node to test if unary node
-     *  @return			true if the specified node is a unary node.
-     */
-    private boolean isAUnary (WAVLNode node){
-        return (node.rightChild==this.externalLeaf
-                && node.leftChild!=this.externalLeaf)
-                || (node.rightChild!=this.externalLeaf
-                && node.leftChild==this.externalLeaf);
-    }
-
-    /**
-     * perform an info switch between the given node and his predecessor.
+     * perform an info and key switch between the given node and his predecessor.
      * returns the predecessor after the switch.
      *
      * @param node node we want to switch with his predecessor
-     * @return the predecessor node with the given node's info
+     * @return the predecessor node with the given node's info and key
      */
-    private WAVLNode switchWithPredecessor(WAVLNode node){
+    private WAVLNode switchWithPredecessor(WAVLNode node) {
+        WAVLNode predecessor = findPredecessor(node);
+        String tempInfo = node.info;
+        int tempKey = node.key;
+        node.info = predecessor.info;
+        node.key = predecessor.key;
+        predecessor.info = tempInfo;
+        predecessor.key = tempKey;
+        return predecessor;
+    }
+
+    private WAVLNode findPredecessor(WAVLNode node) {
         WAVLNode predecessor = node.leftChild;
-        while (predecessor.rightChild != externalLeaf){
+        while (predecessor.rightChild != externalLeaf) {
             predecessor = predecessor.rightChild;
         }
-        String info = node.info;
-        node.info = predecessor.info;
-        predecessor.info = info;
         return predecessor;
     }
 
@@ -614,10 +592,10 @@ public class WAVLTree {
          * Returns the child node with the specified rank difference, if one exists.
          *
          * @param rankDiff rank difference to look for in child nodes
-         * @return         child node with a rank of this.rank-rankDiff
+         * @return child node with a rank of this.rank-rankDiff
          */
         private WAVLNode getChildWithRankDiff(int rankDiff) {
-            if (leftChild.rank ==  this.rank - rankDiff) {
+            if (leftChild.rank == this.rank - rankDiff) {
                 return leftChild;
             } else if (rightChild.rank == this.rank - rankDiff) {
                 return rightChild;
@@ -629,7 +607,7 @@ public class WAVLTree {
          * Returns whether a child node with the specified rank difference exists.
          *
          * @param rankDiff rank difference to look for in child nodes
-         * @return         true iff a child node with the specified rank difference was found
+         * @return true iff a child node with the specified rank difference was found
          */
         private boolean hasChildWithRankDiff(int rankDiff) {
             return getChildWithRankDiff(rankDiff) != null;
@@ -651,6 +629,26 @@ public class WAVLTree {
          */
         private int getRightChildRankDiff() {
             return this.rank - rightChild.rank;
+        }
+
+        /**
+         * Checks whether this node has no children that are not an external leaf.
+         *
+         * @return true iff this node is a leaf.
+         */
+        private boolean isALeaf() {
+            return rightChild == externalLeaf
+                    && leftChild == externalLeaf;
+        }
+
+        /**
+         * Checks whether this node has exactly one child that is not an external leaf.
+         *
+         * @return true iff this node is a unary node.
+         */
+        private boolean isUnary() {
+            return (rightChild == externalLeaf && leftChild != externalLeaf) ||
+                    (rightChild != externalLeaf && leftChild == externalLeaf);
         }
     }
 }
