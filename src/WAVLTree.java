@@ -9,10 +9,16 @@ public class WAVLTree {
 
     private WAVLNode root;
     private final WAVLNode externalLeaf; // assigned to be the bottom node of every route in the tree
+    private WAVLNode min; // node with minimum key in the tree
+    private WAVLNode max; // node with maximum key in the tree
+    private int size; // number of nodes in the tree
 
     public WAVLTree() {
         this.root = null;
         this.externalLeaf = new WAVLNode();
+        this.min = null;
+        this.max = null;
+        this.size = 0;
     }
 
     /**
@@ -52,7 +58,7 @@ public class WAVLTree {
      * returns -1 if an item with key k already exists in the tree.
      */
     public int insert(int k, String i) {
-        WAVLNode searchResult = null;
+        WAVLNode searchResult;
         if (!empty()) {
             searchResult = searchRecursive(root, k);
             if (searchResult.key == k) {
@@ -60,6 +66,9 @@ public class WAVLTree {
             }
         } else {
             root = new WAVLNode(null, externalLeaf, externalLeaf, k, i);
+
+            updateClassMembersInsert(root);
+
             return 0;
         }
 
@@ -70,6 +79,8 @@ public class WAVLTree {
         } else {
             searchResult.rightChild = newNode;
         }
+
+        updateClassMembersInsert(newNode);
 
         return rebalanceInsert(searchResult);
     }
@@ -86,10 +97,18 @@ public class WAVLTree {
         if (!empty()) {
             WAVLNode searchResult = searchRecursive(root, k);
             if (searchResult.key == k) {
+                updateClassMembersDelete(searchResult);
+
+                if (searchResult == root) {
+                    root = null;
+                    return 0;
+                }
+
                 //check if node is unary/leaf/internal
                 if (!(searchResult.isALeaf() || searchResult.isUnary())) {
                     searchResult = switchWithPredecessor(searchResult);
                 }
+
                 return handleStartDelete(searchResult);
             }
         }
@@ -107,11 +126,7 @@ public class WAVLTree {
             return null;
         }
 
-        WAVLNode iterator = root;
-        while (iterator.leftChild != null) {
-            iterator = iterator.leftChild;
-        }
-        return iterator.info;
+        return min.info;
     }
 
     /**
@@ -125,11 +140,7 @@ public class WAVLTree {
             return null;
         }
 
-        WAVLNode iterator = root;
-        while (iterator.rightChild != null) {
-            iterator = iterator.rightChild;
-        }
-        return iterator.info;
+        return max.info;
     }
 
     /**
@@ -171,7 +182,7 @@ public class WAVLTree {
      * postcondition: none
      */
     public int size() {
-        return 42; // to be replaced by student code
+        return size;
     }
 
 
@@ -285,29 +296,50 @@ public class WAVLTree {
         int startCase = checkStartCaseDelete(node);
         switch (startCase) {
             case 0:
-                node = externalLeaf;
+                swapNodes(node, externalLeaf);
                 return 0;
             case 1:
-                node = externalLeaf;
-                node.parent.demote();
-                if (node.parent.parent.hasChildWithRankDiff(2)) {
+                WAVLNode parent = node.parent;
+                swapNodes(node, externalLeaf);
+                parent.demote();
+                if (parent.parent.hasChildWithRankDiff(2)) {
                     return 1;
                 } else {
-                    operationCount = 1 + handleRebalanceDelete(node.parent); // complete infinite state
+                    operationCount = 1 + handleRebalanceDelete(parent); // complete infinite state
                 }
             case 2:
-                node = externalLeaf;
+                swapNodes(node, externalLeaf);
                 operationCount = handleRebalanceDelete(node); // complete infinite state
             case 3:
                 WAVLNode child = node.getChildWithRankDiff(1);
-                node = child;
+                swapNodes(node, child);
                 return 0;
             case 4:
                 WAVLNode child1 = node.getChildWithRankDiff(1);
-                node = child1;
+                swapNodes(node, child1);
                 operationCount = handleRebalanceDelete(node); // complete infinite state
         }
         return operationCount;
+    }
+
+    /**
+     * Swap pointers to node1 with pointers to node2.
+     *
+     * @param node1 node to be swapped
+     * @param node2 node to swap to
+     */
+    private void swapNodes(WAVLNode node1, WAVLNode node2) {
+        // Swap parent's child pointer
+        if (node1.isLeftChild()) {
+            node1.parent.leftChild = node2;
+        } else {
+            node1.parent.rightChild = node2;
+        }
+
+        if (node2 != externalLeaf) {
+            // Swap node2's parent pointer
+            node2.parent = node1.parent;
+        }
     }
 
     /**
@@ -352,30 +384,29 @@ public class WAVLTree {
      * comes to a finite state.
      *
      * @param node which we deleted
-     * @return number of rebalancing operations (counting promote/demote
-     * /rotate as a single operation and double-rotate as two operations)
+     * @return number of rebalancing operations (counting promote/demote/
+     * rotate as a single operation and double-rotate as two operations)
      */
     private int handleRebalanceDelete(WAVLNode node) {
-        int operationCount = 0;
         int rebalanceCase = checkRebalanceCaseDelete(node);
         switch (rebalanceCase) {
             case 0:
-                return operationCount; //the tree is balanced
+                return 0; //the tree is balanced
             case 1:
                 node.parent.demote();
-                operationCount = 1 + handleRebalanceDelete(node.parent);
+                return 1 + handleRebalanceDelete(node.parent);
             case 2:
                 node.parent.demote();
                 node.parent.getChildWithRankDiff(1).demote();
-                operationCount = 2 + handleRebalanceDelete(node.parent);
+                return 2 + handleRebalanceDelete(node.parent);
             case 3:
                 rotate(node.parent, node.parent.getChildWithRankDiff(1));
-                //rank diff is 2 from both childs, node may be sentinal
+                //rank diff is 2 from both children, node may be externalLeaf
                 if (!node.parent.hasChildWithRankDiff(1)) {
                     node.parent.demote();
-                    operationCount = 2;
+                    return 2;
                 }
-                operationCount = 1;
+                return 1;
             case 4:
                 WAVLNode brother = node.parent.getChildWithRankDiff(1);
                 if (node.parent.leftChild == node) {
@@ -383,9 +414,9 @@ public class WAVLTree {
                 } else {
                     doubleRotate(node.parent, brother, brother.rightChild);
                 }
-                operationCount = 2;
+                return 2;
         }
-        return operationCount;
+        return 0;
     }
 
 
@@ -542,6 +573,56 @@ public class WAVLTree {
     }
 
     /**
+     * Updates tree minimum and maximum pointers if needed, and increases tree size by 1.
+     *
+     * @param newNode the newly inserted node
+     */
+    private void updateClassMembersInsert(WAVLNode newNode) {
+        if (newNode == root) {
+            // Update both tree minimum and maximum to the new root
+            min = root;
+            max = root;
+        } else {
+            // Check if tree maximum or minimum need to be updated
+            if (newNode.key < min.key) {
+                min = newNode;
+            }
+            if (newNode.key > max.key) {
+                max = newNode;
+            }
+        }
+
+        // Update tree size
+        size++;
+    }
+
+    /**
+     * Updates tree minimum and maximum pointers if needed, and decreases tree size by 1.
+     *
+     * @param searchResult node to be deleted
+     */
+    private void updateClassMembersDelete(WAVLNode searchResult) {
+        // Check if tree maximum or minimum need to be updated
+        if (searchResult == min) {
+            if (min == root) {
+                min = null;
+            } else {
+                min = min.parent;
+            }
+        }
+        if (searchResult == max) {
+            if (max == root) {
+                max = null;
+            } else {
+                max = max.parent;
+            }
+        }
+
+        // Update tree size
+        size--;
+    }
+
+    /**
      * A single tree-node that holds given String info
      */
     private class WAVLNode {
@@ -649,6 +730,15 @@ public class WAVLTree {
         private boolean isUnary() {
             return (rightChild == externalLeaf && leftChild != externalLeaf) ||
                     (rightChild != externalLeaf && leftChild == externalLeaf);
+        }
+
+        /**
+         * Checks whether this node is the left child of its parent.
+         *
+         * @return true iff this is the left child of parent
+         */
+        private boolean isLeftChild() {
+            return parent.leftChild == this;
         }
     }
 }
