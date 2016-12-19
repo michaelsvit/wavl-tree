@@ -118,8 +118,13 @@ public class WAVLTree {
         return rebalanceDeleteRecursive(searchResult.parent);
     }
 
-    private void deleteNode(WAVLNode searchResult) {
-
+    private void deleteNode(WAVLNode node) {
+        if (node.isALeaf()) {
+            swapNodes(node, externalLeaf);
+        } else {
+            // Unary node
+            swapNodes(node, node.getChildWithRankDiff(1));
+        }
     }
 
     private int rebalanceDeleteRecursive(WAVLNode node) {
@@ -152,7 +157,38 @@ public class WAVLTree {
     }
 
     private int checkCaseDelete(WAVLNode node) {
-        return 0;
+        if (node == null) {
+            return 0; // we reached the root of the tree, no rebalancing needed
+        } else if (!node.hasChildWithRankDiff(3)) {
+            return 0; // no rebalancing is needed
+        }
+
+        if (node.hasChildWithRankDiff(2)) {
+            // Case 1
+            return 1;
+        }
+
+        WAVLNode diffOneChild = node.getChildWithRankDiff(1);
+        int leftDiff = diffOneChild.getLeftChildRankDiff(); // difference from diffOneChild
+        int rightDiff = diffOneChild.getRightChildRankDiff(); // difference from diffOneChild
+
+        if (leftDiff == 2 && rightDiff == 2) {
+            return 2;
+        }
+
+        if (!diffOneChild.isLeftChild()) {
+            if (leftDiff == 1 && rightDiff == 2) {
+                return 4;
+            } else {
+                return 3;
+            }
+        } else {
+            if (rightDiff == 1 && leftDiff == 2) {
+                return 4;
+            } else {
+                return 3;
+            }
+        }
     }
 
     /**
@@ -320,150 +356,6 @@ public class WAVLTree {
                 }
             }
         }
-    }
-
-    /**
-     * rebalances the bottom sub-tree after deletion
-     * and sends the problem up if needed
-     *
-     * @param node which we want to delete
-     * @return number of rebalancing operations (counting promote/demote
-     * /rotate as a single operation and double-rotate as two operations)
-     */
-    private int handleStartDelete(WAVLNode node) {
-        int startCase = checkStartCaseDelete(node);
-        switch (startCase) {
-            case 0:
-                swapNodes(node, externalLeaf);
-                return 0;
-            case 1:
-                WAVLNode parent = node.parent;
-                swapNodes(node, externalLeaf);
-                parent.demote();
-                if (parent.parent.hasChildWithRankDiff(2)) {
-                    return 1;
-                } else {
-                    return 1 + handleRebalanceDelete(parent); // complete infinite state
-                }
-            case 2:
-                swapNodes(node, externalLeaf);
-                return handleRebalanceDelete(node); // complete infinite state
-            case 3:
-                WAVLNode child = node.getChildWithRankDiff(1);
-                swapNodes(node, child);
-                return 0;
-            case 4:
-                WAVLNode child1 = node.getChildWithRankDiff(1);
-                swapNodes(node, child1);
-                return handleRebalanceDelete(node); // complete infinite state
-        }
-        return 0;
-    }
-
-    /**
-     * checks if deleted node is leaf/unary node, and differs between the sub-tree cases.
-     *
-     * @param node which we want to delete
-     * @return number that represents the case we need to deal with at the bottom sub-tree
-     */
-    private int checkStartCaseDelete(WAVLNode node) {
-        WAVLNode parent = node.parent;
-        if (node.isALeaf()) {
-            // Check the rank differences the node's parent has from his children
-            if (parent.getLeftChildRankDiff() == 1 && parent.getRightChildRankDiff() == 1) {
-                // case 0 ,No rebalancing is needed
-                return 0;
-            } else {
-                // separate between leaf deletion cases
-                if (parent.getChildWithRankDiff(1) == node) {
-                    // Case 1
-                    return 1;
-                } else
-                    // Case 2
-                    return 2;
-            }
-        }
-        // if we got so far, the node must be an unary node
-        else {
-            // Check the rank differences the node's parent has from his children
-            if (parent.getChildWithRankDiff(1) == node) {
-                // case 3. combines to different cases ,No rebalancing is needed
-                return 3;
-            } else {
-                // Case 4, the only case remains
-                return 4;
-            }
-        }
-
-    }
-
-    /**
-     * rebalances the whole tree after deletion with recursion, until the problem
-     * comes to a finite state.
-     *
-     * @param node which we deleted
-     * @return number of rebalancing operations (counting promote/demote/
-     * rotate as a single operation and double-rotate as two operations)
-     */
-    private int handleRebalanceDelete(WAVLNode node) {
-        int rebalanceCase = checkRebalanceCaseDelete(node);
-        switch (rebalanceCase) {
-            case 0:
-                return 0; //the tree is balanced
-            case 1:
-                node.parent.demote();
-                return 1 + handleRebalanceDelete(node.parent);
-            case 2:
-                node.parent.demote();
-                node.parent.getChildWithRankDiff(1).demote();
-                return 2 + handleRebalanceDelete(node.parent);
-            case 3:
-                rotate(node.parent, node.parent.getChildWithRankDiff(1));
-                //rank diff is 2 from both children, node may be externalLeaf
-                if (!node.parent.hasChildWithRankDiff(1)) {
-                    node.parent.demote();
-                    return 2;
-                }
-                return 1;
-            case 4:
-                WAVLNode brother = node.parent.getChildWithRankDiff(1);
-                if (node.parent.left == node) {
-                    doubleRotate(node.parent, brother, brother.left);
-                } else {
-                    doubleRotate(node.parent, brother, brother.right);
-                }
-                return 2;
-        }
-        return 0;
-    }
-
-
-    /**
-     * differs between rebalancing cases of internal nodes.
-     *
-     * @param node which we deleted
-     * @return number that represents the rebalancing case we need to deal with
-     */
-    private int checkRebalanceCaseDelete(WAVLNode node) {
-        WAVLNode parent = node.parent;
-        if (!parent.hasChildWithRankDiff(3)) {
-            return 0;
-        } else {
-            if (parent.hasChildWithRankDiff(2)) {
-                return 1;
-            } else {
-                WAVLNode lowDiffChild = parent.getChildWithRankDiff(1);
-                if (lowDiffChild.getLeftChildRankDiff() == 2 && lowDiffChild.getRightChildRankDiff() == 2) {
-                    return 2;
-                } else if (parent.left == node && lowDiffChild.getRightChildRankDiff() == 1
-                        || parent.right == node && lowDiffChild.getLeftChildRankDiff() == 1) {
-                    return 3;
-                } else {
-                    return 4;
-                }
-            }
-        }
-
     }
 
     /**
@@ -815,16 +707,6 @@ public class WAVLTree {
         }
 
         /**
-         * Checks whether this node has exactly one child that is not an external leaf.
-         *
-         * @return true iff this node is a unary node.
-         */
-        private boolean isUnary() {
-            return (right == externalLeaf && left != externalLeaf) ||
-                    (right != externalLeaf && left == externalLeaf);
-        }
-
-        /**
          * Checks whether this node is the left child of its parent.
          *
          * @return true iff this is the left child of parent
@@ -834,7 +716,7 @@ public class WAVLTree {
         }
 
         private boolean isInnerNode() {
-            return false;
+            return left != externalLeaf && right != externalLeaf;
         }
     }
 }
