@@ -105,7 +105,7 @@ public class WAVLTree {
 
         updateClassMembersDelete(searchResult);
         // Eliminate root case
-        if (searchResult == root) {
+        if (searchResult == root && root.isALeaf()) {
             root = null;
             return 0;
         }
@@ -115,7 +115,18 @@ public class WAVLTree {
         }
 
         deleteNode(searchResult);
-        return rebalanceDeleteRecursive(searchResult.parent);
+
+        WAVLNode parent = searchResult.parent;
+        if (parent.isALeaf() && parent.getLeftChildRankDiff() == 2 && parent.getRightChildRankDiff() == 2) {
+            // This is a 2-2 leaf
+            parent.demote();
+            if (parent != root) {
+                return 1 + rebalanceDeleteRecursive(parent.parent);
+            } else {
+                return 1;
+            }
+        }
+        return rebalanceDeleteRecursive(parent);
     }
 
     private void deleteNode(WAVLNode node) {
@@ -137,21 +148,33 @@ public class WAVLTree {
                 node.demote();
                 return 1 + rebalanceDeleteRecursive(node.parent);
             case 2:
-                node.demote();
                 node.getChildWithRankDiff(1).demote();
+                node.demote();
                 return 2 + rebalanceDeleteRecursive(node.parent);
             case 3:
-                rotate(node, node.getChildWithRankDiff(1));
-                if (node.getLeftChildRankDiff() == 2 && node.getRightChildRankDiff() == 2) {
+                WAVLNode diffOneChild3 = node.getChildWithRankDiff(1);
+                rotate(node, diffOneChild3);
+
+                node.demote();
+                diffOneChild3.promote();
+                if (node.isALeaf() && node.getLeftChildRankDiff() == 2 && node.getRightChildRankDiff() == 2) {
                     node.demote();
-                    return 2;
+                    return 4;
                 } else {
-                    return 1;
+                    return 3;
                 }
             case 4:
-                WAVLNode diffOneChild = node.getChildWithRankDiff(1);
-                doubleRotate(node, diffOneChild, diffOneChild.getChildWithRankDiff(1));
-                return 2;
+                WAVLNode diffOneChild4 = node.getChildWithRankDiff(1);
+                WAVLNode diffOneGrandChild = diffOneChild4.getChildWithRankDiff(1);
+
+                doubleRotate(node, diffOneChild4, diffOneGrandChild);
+
+                node.demote();
+                node.demote();
+                diffOneChild4.demote();
+                diffOneGrandChild.promote();
+                diffOneGrandChild.promote();
+                return 7;
         }
         return 0; // unreachable code
     }
@@ -274,29 +297,32 @@ public class WAVLTree {
         int operationCount = 0;
         int rebalanceCase = checkCaseInsert(node);
 
+        if (rebalanceCase == 0) {
+            return 0; // no rebalancing needed
+        }
+
+        while (rebalanceCase == 1) {
+            node.promote();
+            node = node.parent; // this code is reached iff node != null
+            rebalanceCase = checkCaseInsert(node);
+            operationCount++;
+        }
+
         switch (rebalanceCase) {
             case 0:
-                return 0; // no rebalancing needed
-            case 1:
-                do {
-                    node.promote();
-                    node = node.parent; // this code is reached iff node.parent != null
-                    rebalanceCase = checkCaseInsert(node);
-                    operationCount++;
-                } while (rebalanceCase == 1);
-                break;
+                return operationCount; // no rebalancing needed
             case 2:
-                node.demote();
                 WAVLNode child = node.getChildWithRankDiff(0);
+                node.demote();
                 rotate(node, child);
                 operationCount += 2;
                 break;
             case 3:
                 // Fix ranks
-                node.demote();
                 WAVLNode middleNode = node.getChildWithRankDiff(0);
-                middleNode.demote();
                 WAVLNode bottomNode = middleNode.getChildWithRankDiff(1);
+                node.demote();
+                middleNode.demote();
                 bottomNode.promote();
 
                 // Perform double rotation
@@ -322,7 +348,7 @@ public class WAVLTree {
 
         // Check what rank differences the child nodes have from node parameter
         WAVLNode zeroDiffChild = node.getChildWithRankDiff(0); // saved for cases 2,3 to avoid retrieving again
-        boolean hasZeroDiffChild = zeroDiffChild != null; // defined for consistency in code
+        boolean hasZeroDiffChild = (zeroDiffChild != null); // defined for consistency in code
         if (!hasZeroDiffChild) {
             // No rebalancing is needed
             return 0;
@@ -338,7 +364,8 @@ public class WAVLTree {
 
             // Case 2 or 3
             // Check which direction of case 2 or 3 it is
-            if (zeroDiffChild == node.left) {
+            if (node.left == zeroDiffChild) {
+                //TODO: check why zeroDiffChild can be null
                 if (zeroDiffChild.getLeftChildRankDiff() == 1) {
                     // Case 2
                     return 2;
@@ -416,7 +443,7 @@ public class WAVLTree {
     private void rotate(WAVLNode node1, WAVLNode node2) {
         WAVLNode node1Parent = node1.parent; // temporarily save so it's not lost on rotation
 
-        if (node2 == node1.left) {
+        if (node2.isLeftChild()) {
             rotateRight(node1, node2);
         } else {
             rotateLeft(node1, node2);
@@ -424,7 +451,9 @@ public class WAVLTree {
 
         // Fix parent pointers
         node1.parent = node2;
-        node2.parent = node1Parent;
+        if (node2 != externalLeaf) {
+            node2.parent = node1Parent;
+        }
 
         // If not at the tree's root, fix node1's child pointer
         if (node1Parent != null) {
@@ -433,6 +462,11 @@ public class WAVLTree {
             } else {
                 node1Parent.right = node2;
             }
+        }
+
+        // If node1 was the tree root, update root pointer
+        if (root == node1) {
+            root = node2;
         }
     }
 
@@ -448,10 +482,11 @@ public class WAVLTree {
         // Reassign pointers
         node2.left = node1;
         node1.right = node2LeftChild;
+        node2LeftChild.parent = node1;
     }
 
     /**
-     * Performs a left-rotation on the subtree around the edge connecting node1 and node2.
+     * Performs a right-rotation on the subtree around the edge connecting node1 and node2.
      *
      * @param node1 parent node to rotate around
      * @param node2 child node that would become parent
@@ -462,6 +497,7 @@ public class WAVLTree {
         // Reassign pointers
         node2.right = node1;
         node1.left = node2RightChild;
+        node2RightChild.parent = node1;
     }
 
     /**
@@ -473,7 +509,7 @@ public class WAVLTree {
      */
     private void doubleRotate(WAVLNode node1, WAVLNode node2, WAVLNode node3) {
         rotate(node2, node3);
-        rotate(node1, node2);
+        rotate(node1, node3);
     }
 
     /**
@@ -634,7 +670,7 @@ public class WAVLTree {
             this.parent = null;
             this.right = null;
             this.left = null;
-            this.key = Integer.MAX_VALUE;
+            this.key = -1;
             this.info = null;
             this.rank = -1;
         }
