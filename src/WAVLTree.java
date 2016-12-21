@@ -117,6 +117,11 @@ public class WAVLTree {
         deleteNode(searchResult);
 
         WAVLNode parent = searchResult.parent;
+        if (parent == null) {
+            // The node we deleted was the root
+            return 0;
+        }
+
         if (parent.isALeaf() && parent.getLeftChildRankDiff() == 2 && parent.getRightChildRankDiff() == 2) {
             // This is a 2-2 leaf
             parent.demote();
@@ -365,7 +370,6 @@ public class WAVLTree {
             // Case 2 or 3
             // Check which direction of case 2 or 3 it is
             if (node.left == zeroDiffChild) {
-                //TODO: check why zeroDiffChild can be null
                 if (zeroDiffChild.getLeftChildRankDiff() == 1) {
                     // Case 2
                     return 2;
@@ -393,10 +397,14 @@ public class WAVLTree {
      */
     private void swapNodes(WAVLNode node1, WAVLNode node2) {
         // Swap parent's child pointer
-        if (node1.isLeftChild()) {
-            node1.parent.left = node2;
+        if (node1 != root) {
+            if (node1.isLeftChild()) {
+                node1.parent.left = node2;
+            } else {
+                node1.parent.right = node2;
+            }
         } else {
-            node1.parent.right = node2;
+            root = node2;
         }
 
         if (node2 != externalLeaf) {
@@ -565,22 +573,30 @@ public class WAVLTree {
     /**
      * Updates tree minimum and maximum pointers if needed, and decreases tree size by 1.
      *
-     * @param searchResult node to be deleted
+     * @param node node to be deleted
      */
-    private void updateClassMembersDelete(WAVLNode searchResult) {
+    private void updateClassMembersDelete(WAVLNode node) {
         // Check if tree maximum or minimum need to be updated
-        if (searchResult == min) {
+        if (node == min) {
             if (min == root) {
                 min = null;
             } else {
-                min = min.parent;
+                if (min.right == null) {
+                    min = min.parent;
+                } else {
+                    min = min.right;
+                }
             }
         }
-        if (searchResult == max) {
+        if (node == max) {
             if (max == root) {
                 max = null;
             } else {
-                max = max.parent;
+                if (max.left == null) {
+                    max = max.parent;
+                } else {
+                    max = max.left;
+                }
             }
         }
 
