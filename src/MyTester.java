@@ -15,25 +15,37 @@ public class MyTester {
     }
 
     private void run() {
-        int[] keysArr = {50, 30, 20, 10, 25, 23, 27, 5, 60, 28};
+        int[] keysArr1 = {50, 30, 20, 10, 25, 23, 27, 5, 60, 28};
         tree = new WAVLTree();
-        for (int key : keysArr) {
+        for (int key : keysArr1) {
             tree.insert(key, String.valueOf(key));
         }
         printTree();
 
-        testSearch(keysArr);
+        testSearch(keysArr1);
 
 
-        int[] sortedKeysArr = Arrays.copyOf(keysArr, keysArr.length);
+        int[] sortedKeysArr = Arrays.copyOf(keysArr1, keysArr1.length);
         Arrays.sort(sortedKeysArr);
 
         testKeysToArray(sortedKeysArr);
         testInfoToArray(sortedKeysArr);
 
         // Test delete
-        int[] keysToDelete = {5, 10, 23};
-        for (int key : keysToDelete) {
+        int[] keysToDelete1 = {5, 10, 23 /*case 3*/, 60 /*case 4*/};
+        for (int key : keysToDelete1) {
+            tree.delete(key);
+        }
+
+        // Insert more keys
+        int[] keysArr2 = {80, 40, 65 /*case 2*/};
+        for (int key : keysArr2) {
+            tree.insert(key, String.valueOf(key));
+        }
+
+        // Delete more keys
+        int[] keysToDelete2 = {65, 40, 28, 20 /*case 2*/};
+        for (int key : keysToDelete2) {
             tree.delete(key);
         }
         printTree();
