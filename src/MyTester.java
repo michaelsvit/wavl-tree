@@ -48,6 +48,12 @@ public class MyTester {
         for (int key : keysToDelete2) {
             tree.delete(key);
         }
+
+        // Delete all remaining keys
+        for (int key : sortedKeysArr) {
+            tree.delete(key);
+        }
+        tree.delete(80);
         printTree();
 
         System.out.print("Done");
