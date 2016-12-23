@@ -573,6 +573,20 @@ public class WAVLTree {
     }
 
     /**
+     * Find the successor of the given node.
+     *
+     * @param node the node whose successor we are looking for
+     * @return node's successor
+     */
+    private WAVLNode findSuccessor(WAVLNode node) {
+        WAVLNode successor = node.right;
+        while (successor.left != externalLeaf) {
+            successor = successor.left;
+        }
+        return successor;
+    }
+
+    /**
      * Updates tree minimum and maximum pointers if needed, and increases tree size by 1.
      *
      * @param newNode the newly inserted node
@@ -607,10 +621,10 @@ public class WAVLTree {
             if (min == root) {
                 min = null;
             } else {
-                if (min.right == null) {
+                if (min.right == externalLeaf) {
                     min = min.parent;
                 } else {
-                    min = min.right;
+                    min = findSuccessor(min);
                 }
             }
         }
@@ -618,10 +632,10 @@ public class WAVLTree {
             if (max == root) {
                 max = null;
             } else {
-                if (max.left == null) {
+                if (max.left == externalLeaf) {
                     max = max.parent;
                 } else {
-                    max = max.left;
+                    max = findPredecessor(max);
                 }
             }
         }
