@@ -7,7 +7,7 @@
 
 public class WAVLTree {
 
-    public WAVLNode root;
+    private WAVLNode root;
     private final WAVLNode externalLeaf; // assigned to be the bottom node of every route in the tree
     private WAVLNode min; // node with minimum key in the tree
     private WAVLNode max; // node with maximum key in the tree
@@ -699,16 +699,16 @@ public class WAVLTree {
     }
 
     /**
-     * A single tree-node that holds given String info
+     * A single tree-node with a key and String info
      */
-    public class WAVLNode {
+    private class WAVLNode {
 
-        public WAVLNode parent;
-        public WAVLNode left;
-        public WAVLNode right;
-        public int key;
-        public String info;
-        public int rank;
+        private WAVLNode parent;
+        private WAVLNode left;
+        private WAVLNode right;
+        private int key;
+        private String info;
+        private int rank;
 
         /**
          * Constructor to create a tree node
